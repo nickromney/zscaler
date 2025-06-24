@@ -40,7 +40,7 @@ teardown() {
 # Tests for basic functionality
 @test "script shows help with --help" {
   run ./zscaler-mac.sh --help
-  [ "$status" -eq 1 ]  # Help exits with status 1
+  [ "$status" -eq 0 ]  # Help exits with status 0
   [[ "$output" =~ "Usage:" ]]
   [[ "$output" =~ "--azure-cli" ]]
   [[ "$output" =~ "--profile" ]]
@@ -49,7 +49,7 @@ teardown() {
 
 @test "script shows help with -h" {
   run ./zscaler-mac.sh -h
-  [ "$status" -eq 1 ]  # Help exits with status 1
+  [ "$status" -eq 0 ]  # Help exits with status 0
   [[ "$output" =~ "Usage:" ]]
 }
 
@@ -165,14 +165,14 @@ teardown() {
 
 @test "script handles no action options" {
   run ./zscaler-mac.sh
-  [ "$status" -eq 1 ]
+  [ "$status" -eq 0 ]  # Now exits with 0 even on errors
   [[ "$output" =~ "Usage:" ]]
 }
 
 # Tests for error handling
 @test "script handles invalid options" {
   run ./zscaler-mac.sh --invalid-option
-  [ "$status" -eq 1 ]
+  [ "$status" -eq 0 ]  # Now exits with 0 even on errors
   [[ "$output" =~ "Unknown option" ]]
 }
 

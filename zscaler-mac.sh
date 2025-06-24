@@ -64,7 +64,7 @@ usage() {
   echo "  ${0} --dry-run --profile       # Preview shell profile changes"
   echo "  ${0} --azure-cli --profile     # Install Azure CLI cert and update profile"
   echo "  ${0} --profile                 # Only update shell profile"
-  exit 1
+  exit 0
 }
 
 # Check for source-only mode first
@@ -75,7 +75,10 @@ if [[ "$1" == "-s" ]] || [[ "$1" == "--source" ]]; then
 fi
 
 # Process command line arguments
-[[ $# -eq 0 ]] && usage
+if [[ $# -eq 0 ]]; then
+  DRY_RUN=1  # Force dry-run on error
+  usage
+fi
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -96,6 +99,7 @@ while [[ $# -gt 0 ]]; do
     ;;
   *)
     echo "Error: Unknown option: $1"
+    DRY_RUN=1  # Force dry-run on error
     usage
     ;;
   esac
@@ -106,6 +110,7 @@ if [[ $INSTALL_AZURE -eq 0 ]] && [[ $UPDATE_PROFILE -eq 0 ]]; then
   echo "Error: No action specified."
   echo "You must specify at least one action: --azure-cli or --profile"
   echo ""
+  DRY_RUN=1  # Force dry-run on error
   usage
 fi
 
