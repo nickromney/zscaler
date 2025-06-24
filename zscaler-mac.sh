@@ -24,15 +24,27 @@ ENV_NAMES=(
 # Check Zscaler setup
 check_zscaler_setup() {
   if [ ! -d "$ZSCALER_DIR" ]; then
-    echo "Error: Zscaler directory not found at: $ZSCALER_DIR"
-    echo "Please run the Zscaler certificate setup first"
-    exit 1
+    if [[ $DRY_RUN -eq 1 ]]; then
+      echo "[DRY RUN] Warning: Zscaler directory not found at: $ZSCALER_DIR"
+      echo "[DRY RUN] In actual run, this would fail. Please ensure Zscaler certificates are installed."
+      return 0
+    else
+      echo "Error: Zscaler directory not found at: $ZSCALER_DIR"
+      echo "Please run the Zscaler certificate setup first"
+      exit 1
+    fi
   fi
 
   if [ ! -f "$ZSCALER_CERT" ]; then
-    echo "Error: Zscaler certificate not found at: $ZSCALER_CERT"
-    echo "Please run the Zscaler certificate setup first"
-    exit 1
+    if [[ $DRY_RUN -eq 1 ]]; then
+      echo "[DRY RUN] Warning: Zscaler certificate not found at: $ZSCALER_CERT"
+      echo "[DRY RUN] In actual run, this would fail. Please ensure Zscaler certificates are installed."
+      return 0
+    else
+      echo "Error: Zscaler certificate not found at: $ZSCALER_CERT"
+      echo "Please run the Zscaler certificate setup first"
+      exit 1
+    fi
   fi
 }
 
@@ -41,21 +53,32 @@ usage() {
   echo ""
   echo "Options:"
   echo "  -a, --azure-cli     Install the certificate bundle for Azure CLI"
-  echo "  -d, --dry-run       Show what would be done without making changes"
+  echo "  -d, --dry-run       Show what would be done without making changes (runs even without certificates)"
   echo "  -h, --help          Show this help message"
   echo "  -p, --profile       Append environment variables to shell profile (~/.zshrc or ~/.bash_profile)"
   echo ""
   echo "At least one action (-a or -p) must be specified."
   echo ""
   echo "Examples:"
-  echo "  ${0} --azure-cli --profile    # Install Azure CLI cert and update profile"
-  echo "  ${0} -a -d                    # Dry run of Azure CLI cert installation"
-  echo "  ${0} -p                       # Only update shell profile"
-  exit 1
+  echo "  ${0} --dry-run --azure-cli    # Preview Azure CLI cert installation"
+  echo "  ${0} --dry-run --profile       # Preview shell profile changes"
+  echo "  ${0} --azure-cli --profile     # Install Azure CLI cert and update profile"
+  echo "  ${0} --profile                 # Only update shell profile"
+  exit 0
 }
 
+# Check for source-only mode first
+if [[ "$1" == "-s" ]] || [[ "$1" == "--source" ]]; then
+  # Exit early when sourced for testing
+  # shellcheck disable=SC2317
+  return 0 2>/dev/null || exit 0
+fi
+
 # Process command line arguments
-[[ $# -eq 0 ]] && usage
+if [[ $# -eq 0 ]]; then
+  DRY_RUN=1  # Force dry-run on error
+  usage
+fi
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -76,6 +99,7 @@ while [[ $# -gt 0 ]]; do
     ;;
   *)
     echo "Error: Unknown option: $1"
+    DRY_RUN=1  # Force dry-run on error
     usage
     ;;
   esac
@@ -86,6 +110,7 @@ if [[ $INSTALL_AZURE -eq 0 ]] && [[ $UPDATE_PROFILE -eq 0 ]]; then
   echo "Error: No action specified."
   echo "You must specify at least one action: --azure-cli or --profile"
   echo ""
+  DRY_RUN=1  # Force dry-run on error
   usage
 fi
 
