@@ -26,9 +26,10 @@ setup() {
   touch "$HOME/.bashrc"
   
   # Change to the script directory
-  cd "$BATS_TEST_DIRNAME/.."
+  cd "$BATS_TEST_DIRNAME/.." || exit 1
   
   # Source the script functions only (not main)
+  # shellcheck disable=SC1091
   source ./zscaler-mac.sh --source
 }
 
@@ -57,14 +58,14 @@ teardown() {
   rm -rf "$ZSCALER_DIR"
   run ./zscaler-mac.sh --dry-run --profile
   [ "$status" -eq 0 ]  # Should succeed in dry-run mode
-  [[ "$output" =~ "[DRY RUN] Warning: Zscaler directory not found" ]]
+  [[ "$output" =~ \[DRY\ RUN\]\ Warning:\ Zscaler\ directory\ not\ found ]]
 }
 
 @test "script warns in dry-run when certificates are missing" {
   rm -f "$ZSCALER_DIR/ZscalerRootCertificate.crt"
   run ./zscaler-mac.sh --dry-run --profile
   [ "$status" -eq 0 ]  # Should succeed in dry-run mode
-  [[ "$output" =~ "[DRY RUN] Warning: Zscaler certificate not found" ]]
+  [[ "$output" =~ \[DRY\ RUN\]\ Warning:\ Zscaler\ certificate\ not\ found ]]
 }
 
 @test "script fails when certificate directory doesn't exist (not dry-run)" {
@@ -88,7 +89,7 @@ teardown() {
   
   run ./zscaler-mac.sh --dry-run --azure-cli --profile
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "[DRY RUN]" ]]
+  [[ "$output" =~ \[DRY\ RUN\] ]]
   
   # Check that no actual changes were made
   [ ! -f "$HOME/.zscalerCerts/azure-cacert.pem" ]
@@ -138,19 +139,21 @@ teardown() {
 }
 
 @test "profile update detects zsh shell" {
+  # shellcheck disable=SC2030
   export SHELL="/bin/zsh"
   run ./zscaler-mac.sh --dry-run --profile
   [ "$status" -eq 0 ]
-  [[ "$output" =~ ".zshrc" ]]
+  [[ "$output" =~ \.zshrc ]]
 }
 
 @test "profile update detects bash shell" {
+  # shellcheck disable=SC2031
   export SHELL="/bin/bash"
   # Shell profile already created in setup as $HOME/.bash_profile
   
   run ./zscaler-mac.sh --dry-run --profile
   [ "$status" -eq 0 ]
-  [[ "$output" =~ ".bash_profile" ]]
+  [[ "$output" =~ \.bash_profile ]]
 }
 
 # Integration tests
