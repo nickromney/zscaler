@@ -10,7 +10,7 @@ It would be fair to say that there was "some assembly required" for working with
 
 ### Homebrew installation
 
-Install homebrew from (brew.sh)[https://brew.sh/] by running
+Install homebrew from [brew.sh](https://brew.sh/) by running
 
 ```shell
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -42,7 +42,7 @@ From Azure:
 - [Azure CLI behind a proxy](https://learn.microsoft.com/en-gb/cli/azure/use-azure-cli-successfully-troubleshooting#work-behind-a-proxy)
   This documentation assumes a path at
 
-```
+```shell
 /usr/local/Cellar/azure-cli/<cliversion>/libexec/lib/python<version>/site-packages/certifi/cacert.pem
 ```
 
