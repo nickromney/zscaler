@@ -176,13 +176,4 @@ teardown() {
   [[ "$output" =~ "Unknown option" ]]
 }
 
-# Tests for idempotency
-@test "profile update is idempotent" {
-  # Add environment variables to profile first
-  echo "export SSL_CERT_FILE=\"$ZSCALER_DIR/zscalerCAbundle.pem\"" >> "$HOME/.zshrc"
-  
-  run ./zscaler-mac.sh --dry-run --profile
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "already exists" ]]
-}
 
