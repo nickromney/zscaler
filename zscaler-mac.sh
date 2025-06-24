@@ -70,6 +70,7 @@ usage() {
 # Check for source-only mode first
 if [[ "$1" == "-s" ]] || [[ "$1" == "--source" ]]; then
   # Exit early when sourced for testing
+  # shellcheck disable=SC2317
   return 0 2>/dev/null || exit 0
 fi
 
