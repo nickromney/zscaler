@@ -156,6 +156,21 @@ teardown() {
   [[ "$output" =~ \.bash_profile ]]
 }
 
+@test "profile update treats shell metacharacters in paths as literal text" {
+  local marker="$BATS_TEST_TMPDIR/eval-marker"
+  local injected_home="$BATS_TEST_TMPDIR/home'; touch $marker; #"
+
+  mkdir -p "$injected_home/.zscalerCerts"
+  printf "%s\n" "-----BEGIN CERTIFICATE-----" "Mock Zscaler Root Certificate" "-----END CERTIFICATE-----" > "$injected_home/.zscalerCerts/ZscalerRootCertificate.crt"
+  touch "$injected_home/.zshrc"
+
+  run env HOME="$injected_home" SHELL="/bin/zsh" ./zscaler-mac.sh --profile
+
+  [ "$status" -eq 0 ]
+  [ ! -e "$marker" ]
+  grep -qF "export SSL_CERT_FILE=" "$injected_home/.zshrc"
+}
+
 # Integration tests
 @test "script completes successfully with profile option in dry run" {
   run ./zscaler-mac.sh --dry-run --profile
@@ -175,5 +190,4 @@ teardown() {
   [ "$status" -eq 0 ]  # Now exits with 0 even on errors
   [[ "$output" =~ "Unknown option" ]]
 }
-
 

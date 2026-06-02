@@ -75,7 +75,7 @@ Download the certificates from (internal) documentation into
 - $HOME/.zscalerCerts/ZscalerRootCertificate.crt
 - $HOME/.zscalerCerts/zscalerCAbundle.pem
 
-> Note. At your own risk, you may wish to download the two certificates from [Sergio Pereira's repo](https://github.com/sergitopereira/certuploader/tree/main/cert) into `$HOME/.zscalerCerts`, and ensure the names are correct (rename `certBundle.pem` as `zscalerCAbundle.pem`)
+Use certificates from your organization's IT documentation wherever possible. If you do not have an IT-provided source, you can download the certificates from [Sergio Pereira's certuploader repo](https://github.com/sergitopereira/certuploader/tree/main/cert); verify the certificate fingerprint against a trusted source before installing it, then place the files in `$HOME/.zscalerCerts` and ensure the names are correct (rename `certBundle.pem` as `zscalerCAbundle.pem`).
 
 ```shell
 ./zscaler-mac.sh --azure-cli --dry-run
