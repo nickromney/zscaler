@@ -132,16 +132,85 @@ detect_profile() {
   fi
 }
 
-# Function to execute or echo command based on DRY_RUN
-execute_cmd() {
-  local cmd="$1"
-  local msg="$2"
+# Quote a value so it can be safely pasted into a shell profile.
+shell_quote() {
+  printf "%q" "$1"
+}
+
+format_profile_export() {
+  local env_var="$1"
+  local value="$2"
+  local quoted_value
+
+  quoted_value=$(shell_quote "$value")
+  printf "export %s=%s" "$env_var" "$quoted_value"
+}
+
+append_line() {
+  local line="$1"
+  local target="$2"
+  local msg="${3:-}"
 
   if [[ $DRY_RUN -eq 1 ]]; then
-    echo "[DRY RUN] Would execute: $cmd"
+    echo "[DRY RUN] Would append line to: $target"
     [[ -n "$msg" ]] && echo "[DRY RUN] $msg"
   else
-    eval "$cmd"
+    printf "%s\n" "$line" >> "$target"
+    [[ -n "$msg" ]] && echo "$msg"
+  fi
+}
+
+append_file() {
+  local source="$1"
+  local target="$2"
+  local msg="$3"
+
+  if [[ $DRY_RUN -eq 1 ]]; then
+    echo "[DRY RUN] Would append file: $source -> $target"
+    [[ -n "$msg" ]] && echo "[DRY RUN] $msg"
+  else
+    cat "$source" >> "$target"
+    [[ -n "$msg" ]] && echo "$msg"
+  fi
+}
+
+append_profile_export() {
+  local env_var="$1"
+  local value="$2"
+  local profile="$3"
+  local msg="$4"
+
+  append_line "$(format_profile_export "$env_var" "$value")" "$profile" "$msg"
+}
+
+print_profile_export() {
+  local env_var="$1"
+  local value="$2"
+
+  format_profile_export "$env_var" "$value"
+  printf "\n"
+}
+
+print_source_command() {
+  local profile="$1"
+  local quoted_profile
+
+  quoted_profile=$(shell_quote "$profile")
+  printf "source %s\n" "$quoted_profile"
+}
+
+# Function to execute or echo command based on DRY_RUN
+execute_cmd() {
+  local msg="$1"
+  shift
+
+  if [[ $DRY_RUN -eq 1 ]]; then
+    printf "[DRY RUN] Would execute:"
+    printf " %q" "$@"
+    printf "\n"
+    [[ -n "$msg" ]] && echo "[DRY RUN] $msg"
+  else
+    "$@"
     [[ -n "$msg" ]] && echo "$msg"
   fi
 }
@@ -176,11 +245,11 @@ if [[ $INSTALL_AZURE -eq 1 ]]; then
   fi
 
   # Create the Azure bundle
-  execute_cmd "cp '$CERTIFI_PATH' '$AZURE_BUNDLE'" "Copied original certificate bundle to: $AZURE_BUNDLE"
+  execute_cmd "Copied original certificate bundle to: $AZURE_BUNDLE" cp "$CERTIFI_PATH" "$AZURE_BUNDLE"
 
   # Append Zscaler certificate
-  execute_cmd "echo '' >> '$AZURE_BUNDLE'" # Add newline for cleaner separation
-  execute_cmd "cat '$ZSCALER_CERT' >> '$AZURE_BUNDLE'" "Zscaler certificate appended to bundle"
+  append_line "" "$AZURE_BUNDLE" # Add newline for cleaner separation
+  append_file "$ZSCALER_CERT" "$AZURE_BUNDLE" "Zscaler certificate appended to bundle"
 
   echo
   echo "Certificate bundle created at: $AZURE_BUNDLE"
@@ -192,33 +261,33 @@ if [[ $UPDATE_PROFILE -eq 1 ]]; then
   if [[ -n "$PROFILE" ]]; then
     # Add environment variables
     for env_var in "${ENV_NAMES[@]}"; do
-      if grep -q "$env_var=" "$PROFILE"; then
+      if grep -qF "$env_var=" "$PROFILE"; then
         echo "Environment variable $env_var already exists in $PROFILE"
       else
-        execute_cmd "echo 'export $env_var=$ZSCALER_BUNDLE' >> '$PROFILE'" "Added environment variable $env_var to $PROFILE"
+        append_profile_export "$env_var" "$ZSCALER_BUNDLE" "$PROFILE" "Added environment variable $env_var to $PROFILE"
       fi
     done
 
     # Handle REQUESTS_CA_BUNDLE specially for Azure CLI
     if [[ $INSTALL_AZURE -eq 1 ]]; then
-      if grep -q "REQUESTS_CA_BUNDLE=" "$PROFILE"; then
+      if grep -qF "REQUESTS_CA_BUNDLE=" "$PROFILE"; then
         echo "Environment variable REQUESTS_CA_BUNDLE already exists in $PROFILE"
       else
-        execute_cmd "echo 'export REQUESTS_CA_BUNDLE=$AZURE_BUNDLE' >> '$PROFILE'" "Added environment variable REQUESTS_CA_BUNDLE for Azure CLI to $PROFILE"
+        append_profile_export "REQUESTS_CA_BUNDLE" "$AZURE_BUNDLE" "$PROFILE" "Added environment variable REQUESTS_CA_BUNDLE for Azure CLI to $PROFILE"
       fi
     fi
 
     if [[ $DRY_RUN -eq 0 ]]; then
       echo "To apply changes immediately, run:"
-      echo "source $PROFILE"
+      print_source_command "$PROFILE"
     fi
   else
     echo "Could not detect shell profile. Please manually add these environment variables:"
     for env_var in "${ENV_NAMES[@]}"; do
-      echo "export $env_var=$ZSCALER_BUNDLE"
+      print_profile_export "$env_var" "$ZSCALER_BUNDLE"
     done
     if [[ $INSTALL_AZURE -eq 1 ]]; then
-      echo "export REQUESTS_CA_BUNDLE=$AZURE_BUNDLE"
+      print_profile_export "REQUESTS_CA_BUNDLE" "$AZURE_BUNDLE"
     fi
   fi
 fi
