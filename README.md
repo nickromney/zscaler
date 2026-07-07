@@ -64,6 +64,34 @@ From Zscaler:
 - Idempotence - re-run the script with confidence
 - A dry-run flag to know of changes ahead of time
 
+## Local validation
+
+Install the local Git hooks with:
+
+```shell
+lefthook install
+```
+
+The pre-commit hook runs fast ShellCheck validation for staged shell files. The
+pre-push hook runs the same checks as GitHub Actions: ShellCheck, the Bats test
+suite, help output, and the dry-run path.
+
+Skip a hook only when you have a reason:
+
+```shell
+LEFTHOOK=0 git commit
+LEFTHOOK=0 git push
+git commit --no-verify
+git push --no-verify
+```
+
+GitHub Actions CI is now on-demand instead of running automatically on every
+push or pull request:
+
+```shell
+gh workflow run test.yml
+```
+
 ## A process which worked for me
 
 ```shell
